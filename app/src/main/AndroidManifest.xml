@@ -29,7 +29,7 @@
         android:theme="@style/Theme.AudioRouter">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.susnatacodes.audiorouter.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,7 +38,7 @@
         </activity>
 
         <service
-            android:name=".AudioRouterService"
+            android:name="com.susnatacodes.audiorouter.AudioRouterService"
             android:exported="false"
             android:foregroundServiceType="microphone|mediaProjection|connectedDevice" />
     </application>
