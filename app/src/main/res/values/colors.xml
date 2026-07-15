@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="router_bg">#F5F7FA</color>
+    <color name="router_surface">#FFFFFF</color>
+    <color name="router_text">#111827</color>
+    <color name="router_muted">#5B6472</color>
+    <color name="router_accent">#0F766E</color>
+    <color name="router_accent_dark">#0B4F49</color>
+    <color name="router_warning">#A16207</color>
+    <color name="router_line">#D8DEE8</color>
+    <color name="ic_launcher_background">#0F766E</color>
+</resources>

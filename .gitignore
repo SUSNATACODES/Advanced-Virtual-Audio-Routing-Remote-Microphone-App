@@ -1,0 +1,10 @@
+.gradle/
+.idea/
+build/
+captures/
+local.properties
+*.iml
+app/build/
+work/classes*/
+work/android-36.jar
+work/verify/
