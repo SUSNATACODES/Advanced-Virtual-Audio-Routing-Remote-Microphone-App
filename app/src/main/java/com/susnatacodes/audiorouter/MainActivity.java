@@ -1,6 +1,7 @@
-package com.codex.audiorouter;
+package com.susnatacodes.audiorouter;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -52,7 +53,7 @@ public final class MainActivity extends Activity {
             startRoutingUi();
         } else {
             requestNeededPermissions();
-            statusValue.setText("Permissions needed");
+            statusValue.setText(R.string.status_permissions_needed);
         }
     }
 
@@ -71,9 +72,9 @@ public final class MainActivity extends Activity {
                 intent.putExtra(AudioRouterService.EXTRA_RESULT_CODE, resultCode);
                 intent.putExtra(AudioRouterService.EXTRA_RESULT_DATA, data);
                 startRouterService(intent);
-                statusValue.setText("Internal capture ready");
+                statusValue.setText(R.string.status_internal_capture_ready);
             } else {
-                statusValue.setText("Internal capture off");
+                statusValue.setText(R.string.status_internal_capture_off);
             }
         }
     }
@@ -84,10 +85,11 @@ public final class MainActivity extends Activity {
         if (requestCode == REQUEST_PERMISSIONS && hasRequiredPermissions()) {
             startRoutingUi();
         } else if (requestCode == REQUEST_PERMISSIONS) {
-            statusValue.setText("Permissions needed");
+            statusValue.setText(R.string.status_permissions_needed);
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void buildUi() {
         int pad = dp(20);
         ScrollView scrollView = new ScrollView(this);
@@ -101,23 +103,23 @@ public final class MainActivity extends Activity {
                 ScrollView.LayoutParams.WRAP_CONTENT));
 
         TextView title = new TextView(this);
-        title.setText("Advanced Audio Router");
+        title.setText(R.string.app_name);
         title.setTextColor(Color.rgb(17, 24, 39));
         title.setTextSize(26);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         root.addView(title);
 
         statusValue = new TextView(this);
-        statusValue.setText("Mic only");
+        statusValue.setText(R.string.status_mic_only);
         statusValue.setTextColor(Color.rgb(15, 118, 110));
         statusValue.setTextSize(15);
         statusValue.setPadding(0, dp(6), 0, dp(18));
         root.addView(statusValue);
 
         LinearLayout modeRow = row();
-        internalModeButton = modeButton("Internal");
-        mixModeButton = modeButton("Mix");
-        micModeButton = modeButton("Mic");
+        internalModeButton = modeButton(getString(R.string.mode_internal));
+        mixModeButton = modeButton(getString(R.string.mode_mix));
+        micModeButton = modeButton(getString(R.string.mode_mic));
         modeRow.addView(internalModeButton, weightParams());
         modeRow.addView(gap(dp(8)));
         modeRow.addView(mixModeButton, weightParams());
@@ -129,10 +131,10 @@ public final class MainActivity extends Activity {
         mixModeButton.setOnClickListener(view -> setMode(AudioMode.MIC_AND_INTERNAL));
         micModeButton.setOnClickListener(view -> setMode(AudioMode.MIC_ONLY));
 
-        root.addView(sectionLabel("Levels"));
-        micSeek = addSlider(root, "Microphone", 100);
-        internalSeek = addSlider(root, "Internal audio", 0);
-        remoteSeek = addSlider(root, "Remote mic", 100);
+        root.addView(sectionLabel(getString(R.string.section_levels)));
+        micSeek = addSlider(root, getString(R.string.level_microphone), 100);
+        internalSeek = addSlider(root, getString(R.string.level_internal_audio), 0);
+        remoteSeek = addSlider(root, getString(R.string.level_remote_mic), 100);
 
         SeekBar.OnSeekBarChangeListener levelListener = new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -155,39 +157,44 @@ public final class MainActivity extends Activity {
         internalSeek.setOnSeekBarChangeListener(levelListener);
         remoteSeek.setOnSeekBarChangeListener(levelListener);
 
-        root.addView(sectionLabel("Capture"));
-        projectionButton = primaryButton("Enable internal audio");
+        root.addView(sectionLabel(getString(R.string.section_capture)));
+        projectionButton = primaryButton(getString(R.string.button_enable_internal_audio));
         projectionButton.setOnClickListener(view -> requestInternalAudioCapture());
         root.addView(projectionButton, fullWidthButtonParams());
 
         root.addView(gap(dp(10)));
-        startButton = secondaryButton("Stop routing");
+        startButton = secondaryButton(getString(R.string.button_stop_routing));
         startButton.setOnClickListener(view -> {
             Intent intent = serviceIntent(AudioRouterService.ACTION_STOP);
             startService(intent);
-            statusValue.setText("Routing stopped");
+            statusValue.setText(R.string.status_routing_stopped);
         });
         root.addView(startButton, fullWidthButtonParams());
 
-        root.addView(sectionLabel("Remote"));
+        root.addView(sectionLabel(getString(R.string.section_remote)));
         remoteSwitch = new Switch(this);
-        remoteSwitch.setText("Remote mic receiver");
+        remoteSwitch.setText(R.string.remote_mic_receiver);
         remoteSwitch.setTextSize(16);
         remoteSwitch.setTextColor(Color.rgb(17, 24, 39));
         remoteSwitch.setPadding(0, dp(8), 0, dp(8));
         remoteSwitch.setOnCheckedChangeListener(this::onRemoteMicChanged);
         root.addView(remoteSwitch);
 
-        root.addView(sectionLabel("Talk"));
-        pushToTalkButton = secondaryButton("Hold to mute mic");
+        root.addView(sectionLabel(getString(R.string.section_talk)));
+        pushToTalkButton = secondaryButton(getString(R.string.button_hold_to_mute));
         pushToTalkButton.setOnTouchListener((view, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 sendPushToMute(true);
-                statusValue.setText("Mic muted");
+                statusValue.setText(R.string.status_mic_muted);
                 return true;
             }
-            if (event.getAction() == MotionEvent.ACTION_UP
-                    || event.getAction() == MotionEvent.ACTION_CANCEL) {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                view.performClick();
+                sendPushToMute(false);
+                statusValue.setText(selectedMode.label());
+                return true;
+            }
+            if (event.getAction() == MotionEvent.ACTION_CANCEL) {
                 sendPushToMute(false);
                 statusValue.setText(selectedMode.label());
                 return true;
@@ -240,7 +247,7 @@ public final class MainActivity extends Activity {
         Intent intent = serviceIntent(AudioRouterService.ACTION_SET_REMOTE_MIC);
         intent.putExtra(AudioRouterService.EXTRA_ENABLED, checked);
         startRouterService(intent);
-        statusValue.setText(checked ? "Remote mic listening" : selectedMode.label());
+        statusValue.setText(checked ? getString(R.string.status_remote_mic_listening) : selectedMode.label());
     }
 
     private void requestInternalAudioCapture() {
@@ -292,16 +299,12 @@ public final class MainActivity extends Activity {
 
     private void startRouterService(Intent intent) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent);
-            } else {
-                startService(intent);
-            }
+            startForegroundService(intent);
         } catch (SecurityException e) {
             new AlertDialog.Builder(this)
-                    .setTitle("Permission needed")
-                    .setMessage("Microphone and foreground service permissions are required.")
-                    .setPositiveButton("OK", null)
+                    .setTitle(R.string.dialog_permission_title)
+                    .setMessage(R.string.dialog_permission_message)
+                    .setPositiveButton(R.string.dialog_ok, null)
                     .show();
         }
     }

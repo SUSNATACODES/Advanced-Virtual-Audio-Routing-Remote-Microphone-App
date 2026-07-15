@@ -1,4 +1,4 @@
-package com.codex.audiorouter;
+package com.susnatacodes.audiorouter;
 
 import android.content.Context;
 import android.net.nsd.NsdManager;
@@ -8,7 +8,7 @@ import android.util.Log;
 public final class RemoteMicDiscovery {
     private static final String TAG = "RemoteMicDiscovery";
     private static final String SERVICE_TYPE = "_audiomix._udp.";
-    private static final String SERVICE_NAME = "AdvancedAudioRouter";
+    private static final String SERVICE_NAME = "SUSNATACODESAudioRouter";
 
     private final Context appContext;
     private final int port;

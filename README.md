@@ -1,4 +1,4 @@
-# Advanced Audio Router
+# SUSNATACODES Audio Router
 
 Android Studio project for a low-latency audio routing app prototype.
 
@@ -29,9 +29,7 @@ On stock Android, a normal app cannot become the system microphone for every oth
 
 1. Open Android Studio.
 2. Choose `File > Open`.
-3. Select this folder:
-
-   `C:\Users\Dell\Documents\Codex\2026-07-16\advanced-virtual-audio-routing-remote-microphone`
+3. Select the cloned project folder.
 
 4. Let Android Studio sync Gradle.
 5. If prompted, install the requested Android SDK or Gradle plugin.

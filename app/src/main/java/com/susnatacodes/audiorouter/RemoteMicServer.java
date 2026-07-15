@@ -1,4 +1,4 @@
-package com.codex.audiorouter;
+package com.susnatacodes.audiorouter;
 
 import android.util.Log;
 

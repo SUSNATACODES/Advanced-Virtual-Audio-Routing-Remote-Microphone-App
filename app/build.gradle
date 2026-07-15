@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace "com.codex.audiorouter"
+    namespace "com.susnatacodes.audiorouter"
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.codex.audiorouter"
+        applicationId "com.susnatacodes.audiorouter"
         minSdk 29
         targetSdk 36
         versionCode 1

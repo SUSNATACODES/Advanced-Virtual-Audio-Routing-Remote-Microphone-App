@@ -1,7 +1,10 @@
-package com.codex.audiorouter;
+package com.susnatacodes.audiorouter;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioPlaybackCaptureConfiguration;
@@ -42,9 +45,6 @@ public final class AudioEngine {
     }
 
     public void configureInternalCapture(int resultCode, Intent resultData) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            return;
-        }
         MediaProjectionManager manager =
                 (MediaProjectionManager) appContext.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         synchronized (lock) {
@@ -149,18 +149,39 @@ public final class AudioEngine {
 
     private void ensureRecorders() {
         synchronized (lock) {
-            if (micRecorder == null) {
+            boolean wantsMic = state.shouldCaptureLocalMic();
+            boolean wantsInternal = state.shouldCaptureInternalAudio() && mediaProjection != null;
+
+            if (!wantsMic) {
+                releaseMicRecorderLocked();
+            }
+            if (!wantsInternal) {
+                releaseInternalRecorderLocked();
+            }
+            if (!wantsMic && !wantsInternal) {
+                return;
+            }
+            if (!hasRecordAudioPermission()) {
+                throw new SecurityException("RECORD_AUDIO permission is required");
+            }
+            if (wantsMic && micRecorder == null) {
                 micRecorder = buildMicRecorder();
                 micRecorder.startRecording();
                 enableVoiceEffects(micRecorder.getAudioSessionId());
             }
-            if (internalRecorder == null && mediaProjection != null) {
+            if (wantsInternal && internalRecorder == null) {
                 internalRecorder = buildInternalRecorder(mediaProjection);
                 internalRecorder.startRecording();
             }
         }
     }
 
+    private boolean hasRecordAudioPermission() {
+        return appContext.checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @SuppressLint("MissingPermission")
     private AudioRecord buildMicRecorder() {
         AudioFormat format = new AudioFormat.Builder()
                 .setSampleRate(SAMPLE_RATE)
@@ -177,6 +198,7 @@ public final class AudioEngine {
                 .build();
     }
 
+    @SuppressLint("MissingPermission")
     private AudioRecord buildInternalRecorder(MediaProjection projection) {
         AudioFormat format = new AudioFormat.Builder()
                 .setSampleRate(SAMPLE_RATE)

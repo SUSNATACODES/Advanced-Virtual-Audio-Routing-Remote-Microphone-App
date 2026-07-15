@@ -1,4 +1,4 @@
-package com.codex.audiorouter;
+package com.susnatacodes.audiorouter;
 
 public final class AudioSessionState {
     private AudioMode mode = AudioMode.MIC_ONLY;
@@ -45,6 +45,14 @@ public final class AudioSessionState {
 
     public synchronized boolean isRemoteMicEnabled() {
         return remoteMicEnabled;
+    }
+
+    public synchronized boolean shouldCaptureLocalMic() {
+        return mode != AudioMode.INTERNAL_ONLY;
+    }
+
+    public synchronized boolean shouldCaptureInternalAudio() {
+        return mode != AudioMode.MIC_ONLY;
     }
 
     public synchronized void setPushToMuteHeld(boolean pushToMuteHeld) {

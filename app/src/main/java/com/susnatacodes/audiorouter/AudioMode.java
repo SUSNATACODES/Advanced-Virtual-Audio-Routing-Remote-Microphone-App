@@ -1,4 +1,4 @@
-package com.codex.audiorouter;
+package com.susnatacodes.audiorouter;
 
 public enum AudioMode {
     INTERNAL_ONLY("Internal only"),

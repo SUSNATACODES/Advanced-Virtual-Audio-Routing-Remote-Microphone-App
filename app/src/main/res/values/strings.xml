@@ -1,6 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Advanced Audio Router</string>
+    <string name="app_name">SUSNATACODES Audio Router</string>
     <string name="notification_channel">Audio routing</string>
-    <string name="notification_title">Audio Router active</string>
+    <string name="notification_title">SUSNATACODES Audio Router active</string>
+    <string name="status_permissions_needed">Permissions needed</string>
+    <string name="status_internal_capture_ready">Internal capture ready</string>
+    <string name="status_internal_capture_off">Internal capture off</string>
+    <string name="status_mic_only">Mic only</string>
+    <string name="status_routing_stopped">Routing stopped</string>
+    <string name="status_remote_mic_listening">Remote mic listening</string>
+    <string name="status_mic_muted">Mic muted</string>
+    <string name="mode_internal">Internal</string>
+    <string name="mode_mix">Mix</string>
+    <string name="mode_mic">Mic</string>
+    <string name="section_levels">Levels</string>
+    <string name="section_capture">Capture</string>
+    <string name="section_remote">Remote</string>
+    <string name="section_talk">Talk</string>
+    <string name="level_microphone">Microphone</string>
+    <string name="level_internal_audio">Internal audio</string>
+    <string name="level_remote_mic">Remote mic</string>
+    <string name="button_enable_internal_audio">Enable internal audio</string>
+    <string name="button_stop_routing">Stop routing</string>
+    <string name="button_hold_to_mute">Hold to mute mic</string>
+    <string name="remote_mic_receiver">Remote mic receiver</string>
+    <string name="dialog_permission_title">Permission needed</string>
+    <string name="dialog_permission_message">Microphone and foreground service permissions are required.</string>
+    <string name="dialog_ok">OK</string>
 </resources>

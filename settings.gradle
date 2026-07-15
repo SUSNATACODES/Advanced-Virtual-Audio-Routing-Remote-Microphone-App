@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AdvancedAudioRouter"
+rootProject.name = "SUSNATACODESAudioRouter"
 include ":app"
