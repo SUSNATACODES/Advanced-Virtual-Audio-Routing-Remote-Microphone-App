@@ -22,6 +22,8 @@ public final class AudioRouterService extends Service {
             "com.susnatacodes.audiorouter.SET_REMOTE_MIC";
     public static final String ACTION_SET_PUSH_TO_TALK =
             "com.susnatacodes.audiorouter.SET_PUSH_TO_TALK";
+    public static final String ACTION_SET_ADVANCED =
+            "com.susnatacodes.audiorouter.SET_ADVANCED";
 
     public static final String EXTRA_MODE = "mode";
     public static final String EXTRA_MIC_GAIN = "mic_gain";
@@ -31,6 +33,19 @@ public final class AudioRouterService extends Service {
     public static final String EXTRA_RESULT_DATA = "result_data";
     public static final String EXTRA_ENABLED = "enabled";
     public static final String EXTRA_HELD = "held";
+    public static final String EXTRA_MASTER_GAIN = "master_gain";
+    public static final String EXTRA_EQ_LOW_DB = "eq_low_db";
+    public static final String EXTRA_EQ_MID_DB = "eq_mid_db";
+    public static final String EXTRA_EQ_HIGH_DB = "eq_high_db";
+    public static final String EXTRA_LATENCY_TARGET_MS = "latency_target_ms";
+    public static final String EXTRA_VOICE_FX = "voice_fx";
+    public static final String EXTRA_RECORDING = "recording";
+    public static final String EXTRA_NOISE_SUPPRESSION = "noise_suppression";
+    public static final String EXTRA_ECHO_CANCELLATION = "echo_cancellation";
+    public static final String EXTRA_AUTO_GAIN = "auto_gain";
+    public static final String EXTRA_COMPRESSOR = "compressor";
+    public static final String EXTRA_BATTERY_SAVER = "battery_saver";
+    public static final String EXTRA_MONITOR = "monitor";
 
     private static final int NOTIFICATION_ID = 301;
     private static final String CHANNEL_ID = "audio_router";
@@ -98,6 +113,21 @@ public final class AudioRouterService extends Service {
             startForegroundCompat();
         } else if (ACTION_SET_PUSH_TO_TALK.equals(action)) {
             state.setPushToMuteHeld(intent.getBooleanExtra(EXTRA_HELD, false));
+        } else if (ACTION_SET_ADVANCED.equals(action)) {
+            state.setAdvancedControls(
+                    intent.getFloatExtra(EXTRA_MASTER_GAIN, 1f),
+                    intent.getFloatExtra(EXTRA_EQ_LOW_DB, 0f),
+                    intent.getFloatExtra(EXTRA_EQ_MID_DB, 0f),
+                    intent.getFloatExtra(EXTRA_EQ_HIGH_DB, 0f),
+                    intent.getIntExtra(EXTRA_LATENCY_TARGET_MS, 40),
+                    intent.getIntExtra(EXTRA_VOICE_FX, AudioSessionState.VOICE_FX_NORMAL),
+                    intent.getBooleanExtra(EXTRA_RECORDING, false),
+                    intent.getBooleanExtra(EXTRA_NOISE_SUPPRESSION, true),
+                    intent.getBooleanExtra(EXTRA_ECHO_CANCELLATION, true),
+                    intent.getBooleanExtra(EXTRA_AUTO_GAIN, true),
+                    intent.getBooleanExtra(EXTRA_COMPRESSOR, true),
+                    intent.getBooleanExtra(EXTRA_BATTERY_SAVER, false),
+                    intent.getBooleanExtra(EXTRA_MONITOR, false));
         }
 
         audioEngine.start();

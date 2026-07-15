@@ -8,11 +8,16 @@ Android Studio project for a low-latency audio routing app prototype.
   - Internal audio only
   - Microphone + internal audio
   - Microphone only
+- A redesigned dark mixer-style control surface.
+- Live status chips for route, latency target, internal capture, remote mic, recorder, and power mode.
+- Mixer faders for microphone, internal audio, remote mic, and master output.
+- Processing controls for noise suppression, echo cancellation, auto gain, output limiting, voice FX, and EQ.
+- Mixed-output WAV recording to the app music folder.
+- Battery saver and local monitor toggles for future engine paths.
 - Runtime permission flow for microphone, nearby devices, Bluetooth, and notifications.
 - MediaProjection request flow for Android internal-audio capture.
 - Foreground service for long-running audio routing.
 - Java audio engine scaffold using `AudioRecord` and Android `AudioPlaybackCaptureConfiguration`.
-- Separate mic, internal, and remote mic gain controls.
 - Push-to-talk state.
 - UDP remote microphone receiver scaffold.
 - NSD local-network discovery scaffold.
