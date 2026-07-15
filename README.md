@@ -11,6 +11,7 @@ Android Studio project for a low-latency audio routing app prototype.
 - A redesigned dark mixer-style control surface.
 - Live status chips for route, latency target, internal capture, remote mic, recorder, and power mode.
 - Mixer faders for microphone, internal audio, remote mic, and master output.
+- Audio file deck with Android file picker, selected-file display, play/stop, loop, and file-volume control.
 - Processing controls for noise suppression, echo cancellation, auto gain, output limiting, voice FX, and EQ.
 - Mixed-output WAV recording to the app music folder.
 - Battery saver and local monitor toggles for future engine paths.

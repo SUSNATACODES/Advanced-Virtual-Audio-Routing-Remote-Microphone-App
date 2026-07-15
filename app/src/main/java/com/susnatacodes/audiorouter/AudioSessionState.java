@@ -10,6 +10,7 @@ public final class AudioSessionState {
     private float micGain = 1f;
     private float internalGain = 0f;
     private float remoteGain = 1f;
+    private float fileGain = 1f;
     private float masterGain = 1f;
     private float eqLowDb = 0f;
     private float eqMidDb = 0f;
@@ -25,6 +26,10 @@ public final class AudioSessionState {
     private boolean compressorEnabled = true;
     private boolean batterySaverEnabled;
     private boolean monitorEnabled;
+    private boolean filePlaybackEnabled;
+    private boolean fileLoopEnabled;
+    private String fileUri;
+    private String fileDisplayName = "No file selected";
 
     public synchronized AudioMode getMode() {
         return mode;
@@ -55,6 +60,10 @@ public final class AudioSessionState {
         return masterGain;
     }
 
+    public synchronized float getFileGain() {
+        return fileGain;
+    }
+
     public synchronized float getEqLowDb() {
         return eqLowDb;
     }
@@ -79,6 +88,21 @@ public final class AudioSessionState {
         this.micGain = clamp01(micGain);
         this.internalGain = clamp01(internalGain);
         this.remoteGain = clamp01(remoteGain);
+    }
+
+    public synchronized void setFileDeck(
+            String fileUri,
+            String fileDisplayName,
+            float fileGain,
+            boolean filePlaybackEnabled,
+            boolean fileLoopEnabled) {
+        this.fileUri = fileUri;
+        if (fileDisplayName != null && !fileDisplayName.trim().isEmpty()) {
+            this.fileDisplayName = fileDisplayName;
+        }
+        this.fileGain = clamp01(fileGain);
+        this.filePlaybackEnabled = filePlaybackEnabled;
+        this.fileLoopEnabled = fileLoopEnabled;
     }
 
     public synchronized void setAdvancedControls(
@@ -152,6 +176,22 @@ public final class AudioSessionState {
 
     public synchronized boolean isMonitorEnabled() {
         return monitorEnabled;
+    }
+
+    public synchronized boolean isFilePlaybackEnabled() {
+        return filePlaybackEnabled;
+    }
+
+    public synchronized boolean isFileLoopEnabled() {
+        return fileLoopEnabled;
+    }
+
+    public synchronized String getFileUri() {
+        return fileUri;
+    }
+
+    public synchronized String getFileDisplayName() {
+        return fileDisplayName;
     }
 
     public synchronized void setPushToMuteHeld(boolean pushToMuteHeld) {

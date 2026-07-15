@@ -24,6 +24,8 @@ public final class AudioRouterService extends Service {
             "com.susnatacodes.audiorouter.SET_PUSH_TO_TALK";
     public static final String ACTION_SET_ADVANCED =
             "com.susnatacodes.audiorouter.SET_ADVANCED";
+    public static final String ACTION_SET_FILE_DECK =
+            "com.susnatacodes.audiorouter.SET_FILE_DECK";
 
     public static final String EXTRA_MODE = "mode";
     public static final String EXTRA_MIC_GAIN = "mic_gain";
@@ -46,6 +48,11 @@ public final class AudioRouterService extends Service {
     public static final String EXTRA_COMPRESSOR = "compressor";
     public static final String EXTRA_BATTERY_SAVER = "battery_saver";
     public static final String EXTRA_MONITOR = "monitor";
+    public static final String EXTRA_FILE_URI = "file_uri";
+    public static final String EXTRA_FILE_NAME = "file_name";
+    public static final String EXTRA_FILE_GAIN = "file_gain";
+    public static final String EXTRA_FILE_PLAYING = "file_playing";
+    public static final String EXTRA_FILE_LOOP = "file_loop";
 
     private static final int NOTIFICATION_ID = 301;
     private static final String CHANNEL_ID = "audio_router";
@@ -54,6 +61,7 @@ public final class AudioRouterService extends Service {
     private AudioEngine audioEngine;
     private RemoteMicServer remoteMicServer;
     private RemoteMicDiscovery remoteMicDiscovery;
+    private AudioFilePlayer audioFilePlayer;
     private boolean internalCaptureReady;
 
     @Override
@@ -63,6 +71,7 @@ public final class AudioRouterService extends Service {
         audioEngine = new AudioEngine(this, state);
         remoteMicServer = new RemoteMicServer(38420);
         remoteMicDiscovery = new RemoteMicDiscovery(this, 38420);
+        audioFilePlayer = new AudioFilePlayer(this);
     }
 
     @Override
@@ -128,6 +137,18 @@ public final class AudioRouterService extends Service {
                     intent.getBooleanExtra(EXTRA_COMPRESSOR, true),
                     intent.getBooleanExtra(EXTRA_BATTERY_SAVER, false),
                     intent.getBooleanExtra(EXTRA_MONITOR, false));
+        } else if (ACTION_SET_FILE_DECK.equals(action)) {
+            state.setFileDeck(
+                    intent.getStringExtra(EXTRA_FILE_URI),
+                    intent.getStringExtra(EXTRA_FILE_NAME),
+                    intent.getFloatExtra(EXTRA_FILE_GAIN, 1f),
+                    intent.getBooleanExtra(EXTRA_FILE_PLAYING, false),
+                    intent.getBooleanExtra(EXTRA_FILE_LOOP, false));
+            audioFilePlayer.update(
+                    state.getFileUri(),
+                    state.isFilePlaybackEnabled(),
+                    state.isFileLoopEnabled(),
+                    state.getFileGain());
         }
 
         audioEngine.start();
@@ -148,6 +169,7 @@ public final class AudioRouterService extends Service {
         audioEngine.stop();
         remoteMicServer.stop();
         remoteMicDiscovery.stopAdvertising();
+        audioFilePlayer.stop();
         super.onDestroy();
     }
 

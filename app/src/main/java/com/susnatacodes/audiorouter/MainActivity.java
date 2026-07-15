@@ -7,14 +7,17 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.media.projection.MediaProjectionManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.OpenableColumns;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -35,6 +38,7 @@ import java.util.Locale;
 public final class MainActivity extends Activity {
     private static final int REQUEST_CAPTURE_AUDIO = 1001;
     private static final int REQUEST_PERMISSIONS = 1002;
+    private static final int REQUEST_PICK_AUDIO = 1003;
 
     private static final int BG = Color.rgb(7, 11, 22);
     private static final int SURFACE = Color.rgb(17, 25, 43);
@@ -59,6 +63,9 @@ public final class MainActivity extends Activity {
     private AudioMode selectedMode = AudioMode.MIC_ONLY;
     private boolean routingActive;
     private boolean internalCaptureReady;
+    private boolean filePlaying;
+    private Uri selectedFileUri;
+    private String selectedFileName = "No audio selected";
     private int voiceFxMode = AudioSessionState.VOICE_FX_NORMAL;
 
     private TextView statusValue;
@@ -68,12 +75,17 @@ public final class MainActivity extends Activity {
     private TextView remoteValue;
     private TextView recordingValue;
     private TextView batteryValue;
+    private TextView fileValue;
+    private TextView fileStatusValue;
     private Button internalModeButton;
     private Button mixModeButton;
     private Button micModeButton;
     private Button startButton;
     private Button projectionButton;
     private Button pushToTalkButton;
+    private Button chooseFileButton;
+    private Button playFileButton;
+    private Button stopFileButton;
     private Button voiceCleanButton;
     private Button voiceDeepButton;
     private Button voiceBrightButton;
@@ -81,12 +93,14 @@ public final class MainActivity extends Activity {
     private SeekBar micSeek;
     private SeekBar internalSeek;
     private SeekBar remoteSeek;
+    private SeekBar fileSeek;
     private SeekBar masterSeek;
     private SeekBar latencySeek;
     private SeekBar eqLowSeek;
     private SeekBar eqMidSeek;
     private SeekBar eqHighSeek;
     private Switch remoteSwitch;
+    private Switch fileLoopSwitch;
     private Switch recordingSwitch;
     private Switch noiseSwitch;
     private Switch echoSwitch;
@@ -135,6 +149,21 @@ public final class MainActivity extends Activity {
                 statusValue.setText(R.string.status_internal_capture_off);
             }
             updateLiveStatus();
+        } else if (requestCode == REQUEST_PICK_AUDIO) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                selectedFileUri = data.getData();
+                selectedFileName = resolveFileName(selectedFileUri);
+                persistFilePermission(data, selectedFileUri);
+                filePlaying = false;
+                if (fileValue != null) {
+                    fileValue.setText(selectedFileName);
+                }
+                if (fileStatusValue != null) {
+                    fileStatusValue.setText("Ready");
+                }
+                statusValue.setText("File selected: " + selectedFileName);
+                sendFileDeck();
+            }
         }
     }
 
@@ -163,6 +192,7 @@ public final class MainActivity extends Activity {
         root.addView(buildHeroPanel(), blockParams());
         root.addView(buildModePanel(), blockParams());
         root.addView(buildMixerPanel(), blockParams());
+        root.addView(buildFileDeckPanel(), blockParams());
         root.addView(buildTransportPanel(), blockParams());
         root.addView(buildProcessingPanel(), blockParams());
         root.addView(buildEqPanel(), blockParams());
@@ -200,7 +230,7 @@ public final class MainActivity extends Activity {
 
         LinearLayout gridThree = row();
         batteryValue = statChip(gridThree, "Power", "Low latency", ACCENT);
-        statChip(gridThree, "Output", "Limiter on", ACCENT);
+        fileStatusValue = statChip(gridThree, "File deck", "No file", MUTED);
         panel.addView(gridThree);
 
         return panel;
@@ -231,8 +261,57 @@ public final class MainActivity extends Activity {
         micSeek = addMixerSlider(panel, "Microphone", 100, ACCENT, this::sendLevels);
         internalSeek = addMixerSlider(panel, "Internal audio", 0, CYAN, this::sendLevels);
         remoteSeek = addMixerSlider(panel, "Remote mic", 100, WARNING, this::sendLevels);
+        fileSeek = addMixerSlider(panel, "File deck", 85, CYAN, this::sendFileDeck);
         masterSeek = addMixerSlider(panel, "Master output", 100, ACCENT, this::sendAdvanced);
         masterSeek.setMax(150);
+        return panel;
+    }
+
+    private LinearLayout buildFileDeckPanel() {
+        LinearLayout panel = panel("Audio file deck");
+
+        LinearLayout fileCard = new LinearLayout(this);
+        fileCard.setOrientation(LinearLayout.VERTICAL);
+        fileCard.setPadding(dp(12), dp(12), dp(12), dp(12));
+        fileCard.setBackground(rounded(SURFACE_ALT, dp(8), LINE));
+
+        fileCard.addView(text("Selected audio", 12, MUTED, Typeface.BOLD));
+        fileValue = text(selectedFileName, 16, TEXT, Typeface.BOLD);
+        fileValue.setPadding(0, dp(4), 0, 0);
+        fileCard.addView(fileValue);
+        TextView hint = text("Pick music, effects, backing tracks, or class audio from your phone.", 12, MUTED, Typeface.NORMAL);
+        hint.setPadding(0, dp(6), 0, 0);
+        fileCard.addView(hint);
+        panel.addView(fileCard, blockParams());
+
+        LinearLayout rowOne = row();
+        chooseFileButton = primaryButton("Choose audio");
+        chooseFileButton.setOnClickListener(view -> chooseAudioFile());
+        rowOne.addView(chooseFileButton, weightHeightParams(52));
+        rowOne.addView(gap(dp(10)));
+
+        playFileButton = secondaryButton("Play");
+        playFileButton.setOnClickListener(view -> playSelectedFile());
+        rowOne.addView(playFileButton, weightHeightParams(52));
+        panel.addView(rowOne);
+
+        LinearLayout rowTwo = row();
+        stopFileButton = secondaryButton("Stop file");
+        stopFileButton.setOnClickListener(view -> stopSelectedFile());
+        rowTwo.addView(stopFileButton, weightHeightParams(52));
+        rowTwo.addView(gap(dp(10)));
+
+        Button clearFileButton = secondaryButton("Clear");
+        clearFileButton.setOnClickListener(view -> clearSelectedFile());
+        rowTwo.addView(clearFileButton, weightHeightParams(52));
+        LinearLayout.LayoutParams rowTwoParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowTwoParams.setMargins(0, dp(10), 0, 0);
+        panel.addView(rowTwo, rowTwoParams);
+
+        fileLoopSwitch = switchRow(panel, "Loop selected file", "Keep backing track or sound bed repeating");
+        fileLoopSwitch.setOnCheckedChangeListener((button, checked) -> sendFileDeck());
         return panel;
     }
 
@@ -381,6 +460,7 @@ public final class MainActivity extends Activity {
         sendStart();
         setMode(AudioMode.MIC_ONLY);
         sendAdvanced();
+        sendFileDeck();
         updateTransportButton();
     }
 
@@ -395,6 +475,7 @@ public final class MainActivity extends Activity {
             sendStart();
             sendLevels();
             sendAdvanced();
+            sendFileDeck();
             statusValue.setText(selectedMode.label());
         } else {
             requestNeededPermissions();
@@ -450,6 +531,22 @@ public final class MainActivity extends Activity {
         updateLiveStatus();
     }
 
+    private void sendFileDeck() {
+        Intent intent = serviceIntent(AudioRouterService.ACTION_SET_FILE_DECK);
+        intent.putExtra(AudioRouterService.EXTRA_FILE_URI,
+                selectedFileUri == null ? null : selectedFileUri.toString());
+        intent.putExtra(AudioRouterService.EXTRA_FILE_NAME, selectedFileName);
+        intent.putExtra(AudioRouterService.EXTRA_FILE_GAIN,
+                fileSeek == null ? 0.85f : fileSeek.getProgress() / 100f);
+        intent.putExtra(AudioRouterService.EXTRA_FILE_PLAYING, filePlaying);
+        intent.putExtra(AudioRouterService.EXTRA_FILE_LOOP,
+                fileLoopSwitch != null && fileLoopSwitch.isChecked());
+        if (routingActive) {
+            startRouterService(intent);
+        }
+        updateLiveStatus();
+    }
+
     private void sendPushToMute(boolean held) {
         Intent intent = serviceIntent(AudioRouterService.ACTION_SET_PUSH_TO_TALK);
         intent.putExtra(AudioRouterService.EXTRA_HELD, held);
@@ -471,6 +568,54 @@ public final class MainActivity extends Activity {
 
     private void onAdvancedSwitchChanged(CompoundButton button, boolean checked) {
         sendAdvanced();
+    }
+
+    private void chooseAudioFile() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("audio/*");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(intent, REQUEST_PICK_AUDIO);
+    }
+
+    private void playSelectedFile() {
+        if (selectedFileUri == null) {
+            statusValue.setText("Choose an audio file first");
+            updateLiveStatus();
+            return;
+        }
+        if (!routingActive) {
+            if (!hasRequiredPermissions()) {
+                requestNeededPermissions();
+                return;
+            }
+            routingActive = true;
+            sendStart();
+            sendLevels();
+            sendAdvanced();
+            updateTransportButton();
+        }
+        filePlaying = true;
+        sendFileDeck();
+        statusValue.setText("Playing: " + selectedFileName);
+    }
+
+    private void stopSelectedFile() {
+        filePlaying = false;
+        sendFileDeck();
+        statusValue.setText("File stopped");
+    }
+
+    private void clearSelectedFile() {
+        filePlaying = false;
+        selectedFileUri = null;
+        selectedFileName = "No audio selected";
+        if (fileValue != null) {
+            fileValue.setText(selectedFileName);
+        }
+        sendFileDeck();
+        statusValue.setText(selectedFileName);
     }
 
     private void requestInternalAudioCapture() {
@@ -499,6 +644,46 @@ public final class MainActivity extends Activity {
         }
         if (batteryValue != null) {
             batteryValue.setText(batterySwitch != null && batterySwitch.isChecked() ? "Saver on" : "Low latency");
+        }
+        if (fileStatusValue != null) {
+            if (selectedFileUri == null) {
+                fileStatusValue.setText("No file");
+            } else if (filePlaying) {
+                fileStatusValue.setText(fileLoopSwitch != null && fileLoopSwitch.isChecked()
+                        ? "Playing loop" : "Playing");
+            } else {
+                fileStatusValue.setText("Ready");
+            }
+        }
+    }
+
+    private String resolveFileName(Uri uri) {
+        String fallback = uri.getLastPathSegment();
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (index >= 0) {
+                    String name = cursor.getString(index);
+                    if (name != null && !name.trim().isEmpty()) {
+                        return name;
+                    }
+                }
+            }
+        } catch (SecurityException ignored) {
+            // Fall back to URI path if the provider withholds display metadata.
+        }
+        return fallback == null ? "Selected audio" : fallback;
+    }
+
+    private void persistFilePermission(Intent data, Uri uri) {
+        if ((data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == 0) {
+            return;
+        }
+        try {
+            getContentResolver().takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (SecurityException ignored) {
+            // Some providers grant temporary access only; playback still works during this session.
         }
     }
 
